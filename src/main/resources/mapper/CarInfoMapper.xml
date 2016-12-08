@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<!-- 不使用namespace的话sql搜索定位会比较方便 -->
+<mapper namespace="com.mj.bill.dao.ICarInfoDao">
+
+	<resultMap id="RM_CarInfo" type="com.mj.bill.vo.CarInfo">
+        <result property="id" column="id"/>
+        <result property="headerNumber" column="header_number"/>
+        <result property="trailerNumber" column="trailer_number"/>
+        <result property="carType" column="car_type"/>
+        <result property="weight" column="weight"/>
+        <result property="capacity" column="capacity"/>
+        <result property="carPhone" column="car_phone"/>
+        <result property="driverName" column="driver_name"/>
+        <result property="driverPhone" column="driver_phone"/>
+        <result property="followerName" column="follower_name"/>
+        <result property="followerPhone" column="follower_phone"/>
+        <result property="backupPhone" column="backup_phone"/>
+        <result property="expiredDate" column="expired_date"/>
+        <result property="remark" column="remark"/>
+        <result property="status" column="status"/>
+	</resultMap>
+	
+	<!-- 用于select查询公用抽取的列 -->
+	<sql id="columns">
+	    <![CDATA[
+		id,header_number,trailer_number,car_type,weight,capacity,car_phone,driver_name,driver_phone,follower_name,follower_phone,backup_phone,expired_date,remark,status
+	    ]]>
+	</sql>
+
+	<!-- useGeneratedKeys="true" keyProperty="xxx" for sqlserver and mysql -->
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    <![CDATA[
+        INSERT INTO car_info (
+        	id ,
+        	header_number ,
+        	trailer_number ,
+        	car_type ,
+        	weight ,
+        	capacity ,
+        	car_phone ,
+        	driver_name ,
+        	driver_phone ,
+        	follower_name ,
+        	follower_phone ,
+        	backup_phone ,
+        	expired_date ,
+        	remark,
+        	status
+        ) VALUES (
+        	#{id} ,
+        	#{headerNumber} ,
+        	#{trailerNumber} ,
+        	#{carType} ,
+        	#{weight} ,
+        	#{capacity} ,
+        	#{carPhone} ,
+        	#{driverName} ,
+        	#{driverPhone} ,
+        	#{followerName} ,
+        	#{followerPhone} ,
+        	#{backupPhone} ,
+        	#{expiredDate} ,
+        	#{remark} ,
+        	#{status} 
+        )
+    ]]>
+		<!--	
+			oracle: order="BEFORE" SELECT sequenceName.nextval AS ID FROM DUAL 
+			DB2: order="BEFORE"" values nextval for sequenceName
+		<selectKey resultType="java.lang.Long" order="BEFORE" keyProperty="userId">
+			SELECT sequenceName.nextval AS ID FROM DUAL 
+        </selectKey>
+		-->
+	</insert>
+	
+    <sql id="update_sql">
+         <set>
+	         	header_number = #{headerNumber} ,
+	         	trailer_number = #{trailerNumber} ,
+	         	car_type = #{carType} ,
+	         	status = #{status} ,
+	         	weight = #{weight} ,
+	         	capacity = #{capacity} ,
+	         	car_phone = #{carPhone} ,
+	         	driver_name = #{driverName} ,
+	         	driver_phone = #{driverPhone} ,
+	         	follower_name = #{followerName} ,
+	         	follower_phone = #{followerPhone} ,
+	         	backup_phone = #{backupPhone} ,
+	         	expired_date = #{expiredDate} ,
+	         	remark = #{remark} 
+        </set>
+    </sql>
+    
+	<update id="update" >
+	        UPDATE  car_info
+	    <include refid="update_sql" />
+	        WHERE 
+	                id = #{id} 
+	</update>
+
+    <delete id="delete">
+    <![CDATA[
+        DELETE FROM car_info WHERE
+        id = #{id} 
+    ]]>
+    </delete>
+    
+    <select id="getById" resultMap="RM_CarInfo">
+		SELECT <include refid="columns" />
+	    <![CDATA[
+		    FROM car_info 
+	        WHERE 
+		        id = #{id} 
+	    ]]>
+	</select>
+	
+	<sql id="findPage_where">
+		<!-- ognl访问静态方法的表达式 为@class@method(args),以下为调用rapid中的Ognl.isNotEmpty()方法,还有其它方法如isNotBlank()可以使用，具体请查看Ognl类 -->
+		<where>	      				
+                <if test="headerNumber != null and headerNumber != ''">
+		             AND header_number = #{headerNumber}
+	            </if>
+
+
+                <if test="driverName != null and driverName !=''">
+		             AND driver_name  =#{driverName} 
+	            </if>
+                <if test="driverPhone != null and driverPhone !=''">
+		             AND driver_phone like concat(concat('%',#{driverPhone}),'%')
+	            </if>
+                <if test="followerName != null and followerName !=''">
+		             AND follower_name = #{followerName}
+	            </if>
+
+		</where>
+	</sql>
+		
+
+     <select id="queryCarInfoByCondition" resultMap="RM_CarInfo">
+    	SELECT <include refid="columns" />
+	    FROM car_info 
+	    <include refid="findPage_where"/>
+	    order by status
+		 <if test="beginRow != null and pageSize != null">
+			 LIMIT #{beginRow}, #{pageSize}
+		 </if>
+     </select>
+     
+     <select id="queryCarInfoByConditionTotal" resultType="int">
+    	SELECT count(1)
+	    FROM car_info 
+	    <include refid="findPage_where"/>
+     </select>
+
+</mapper>
+
